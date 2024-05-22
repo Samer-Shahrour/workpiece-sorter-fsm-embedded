@@ -1,3 +1,6 @@
+#pragma once
+
+#include <cstdint>
 #define GPIO_DATA_OUT 0x13C
 #define GPIO_OE 0x134
 
@@ -50,8 +53,8 @@ class Actuators {
         void ledSwitchOff(int led_id);
         void lampSwitchOn(int lamp_id);
         void lampSwitchOff(int lamp_id);
-        void letThrough(void);
-        void sortOut(void);
+        void closeSwitch(void);
+        void openSwitch(void);
+        void letThrough(void); 	// -> kann wahrscheinlich weg
+        void sortOut(void);		// -> kann wahrscheinlich weg
 };
-
-

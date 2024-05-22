@@ -5,7 +5,8 @@
 #include <sys/neutrino.h>
 #include <sys/mman.h>
 
-#include "../header/Actuators.h"
+#include "../../header/Hal/Actuators.h"
+
 
 
 Actuators::Actuators(){
@@ -63,6 +64,7 @@ void Actuators::lampSwitchOff(int lamp_id){
     out32((uintptr_t)(gpio_bank_1 + CLEAR), lamp_id);
 }
 
+// kann wahrscheinlich weg
 void Actuators::letThrough(void){
 	if(isSwitch){
 		out32((uintptr_t)(gpio_bank_1 + SET), SWITCH);
@@ -71,11 +73,28 @@ void Actuators::letThrough(void){
 	}
 }
 
+// kann wahrscheinlich weg
 void Actuators::sortOut(void){
 	if(!isSwitch){
 		out32((uintptr_t)(gpio_bank_1 + SET), SWITCH);
 		usleep(100*500);
 		out32((uintptr_t) (gpio_bank_1 + CLEAR), SWITCH);
+	}
+}
+
+void Actuators::openSwitch(void){
+	if(isSwitch){
+		out32((uintptr_t)(gpio_bank_1 + SET), SWITCH); // Weiche öffnen
+	} else {
+		out32((uintptr_t) (gpio_bank_1 + CLEAR), SWITCH); // Auswerfer schließen
+	}
+}
+
+void Actuators::closeSwitch(void){
+	if(isSwitch){
+		out32((uintptr_t)(gpio_bank_1 + CLEAR), SWITCH); // Weiche schließen
+	} else {
+		out32((uintptr_t) (gpio_bank_1 + SET), SWITCH); // Auswerfer öffnen
 	}
 }
 

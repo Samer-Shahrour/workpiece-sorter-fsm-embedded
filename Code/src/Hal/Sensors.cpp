@@ -5,7 +5,7 @@
 #include <sys/neutrino.h>
 #include <sys/mman.h>
 
-#include "../header/Sensors.h"
+#include "../../header/hal/Sensors.h"
 
 
 Sensors::Sensors(){
