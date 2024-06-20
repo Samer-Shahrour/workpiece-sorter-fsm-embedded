@@ -42,7 +42,6 @@ void EStopActions::motorUnblock(void){
 
 void EStopActions::deleteAllTimer(ContextData *data){
 	for (int i = 0; i < data->queue.size(); i++){
-		data->queue[i].deleteMinTimer();
 		data->queue[i].deleteMaxTimer();
 	}
 }

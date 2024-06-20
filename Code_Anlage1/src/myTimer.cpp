@@ -5,7 +5,18 @@
 #include <unistd.h>
 #include "../header/myTimer.h"
 
+
 using namespace std;
+
+long long createTimeStamp(){
+    struct timespec time;
+    clock_gettime(CLOCK_REALTIME, &time);
+
+    long seconds = time.tv_sec;
+    long nano = time.tv_nsec;
+    long milliseconds = (seconds * 1000) + (nano / 1000000);
+    return milliseconds;
+}
 
 void myStartTimer(timer_t* timerid, int connectionID_Interrupt, short TIME_OUT_CODE, int value, bool period, uint64_t timeOutInMS) {
 	struct sigevent sigEvent;

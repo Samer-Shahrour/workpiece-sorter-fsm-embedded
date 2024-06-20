@@ -8,7 +8,7 @@ private:
 public:
     int connectionID_Dispatcher;
     int connectionID_FSM;
-    void notifyFSms(void);
+    void notifyFSMs(void);
     void deleteFromVector(ContextData* data, int id);
     void letThrough(void);
     void sortOut(void);

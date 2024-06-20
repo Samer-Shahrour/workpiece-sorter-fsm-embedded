@@ -13,6 +13,8 @@ public:
     uint64_t sectionBticks = 0;
     uint64_t sectionCticks = 0;
     uint64_t sectionDticks = 0;
+    uint64_t stopTimeBegin = 0;
+    uint64_t stopTime = 1;
     std::vector<Workpiece> queue;
     int counter_HM;
     uint64_t slowHSticks;

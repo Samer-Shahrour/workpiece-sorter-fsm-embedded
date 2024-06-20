@@ -16,11 +16,6 @@ void HMActions::motor_fast(bool on) {
     }
 }
 
-void HMActions::startTimer(ContextData* data, int id) {
-    data->queue[id].startMinTimer(data->sectionBticks-1000); //TODO: Ticks besser bestimmen
-    data->queue[id].startMaxTimer(data->sectionBticks+1000);
-}
-
 void HMActions::deleteMaxTimer(ContextData *data, int id) {
     data->queue[id].deleteMaxTimer();
 }

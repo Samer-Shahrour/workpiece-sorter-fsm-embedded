@@ -20,7 +20,7 @@ void handleWrongWP(SwitchActions *actions, ContextData* data){
 
 void SwitchIdle::metal_detected(){
     int id = data->counter_switch;
-    if(data->queue.size() > id && data->queue[id].minTimerOk) {
+    if(data->queue.size() > id) {
         data->queue[id].setType(WorkpieceType::MetalWorkpiece);
     }
     printf("SWITCH: METAL DETECTED: %d\n", id);
@@ -28,23 +28,40 @@ void SwitchIdle::metal_detected(){
 
 void SwitchIdle::lbs_blocked() {
     int id = data->counter_switch;
-    if(data->queue.size() <= id || !data->queue[id].minTimerOk){ // WP aufgetaucht
-        if(data->queue.size() <= id){
-            printf("SWITCH: out of Bounds id: %d\n", id);
-        }
-        else if(!data->queue[id].minTimerOk){
-            printf("SWITCH: minTimerOk_sectionB false: %d\n", id);
-        }
-        actions->notifyFSms();
-        new(this) SwitchError;  // → brauchen wir höchstwahrscheinlich nicht,
-                                // da notifyFSMs uns zu Error schickt, → müssen wir testen
+    bool validId = id < data->queue.size();
+
+    if(data->stopTime == 0){
+        printf("SWITCH: BELT IS STOPPED!!!!!!!!!!");
+        actions->notifyFSMs();
+        new(this) SwitchError;
+    }
+
+    if(!validId){
+        printf("SWITCH: OUT OF BOUNDS -id: %d, -queueSize: %d.\n", id, data->queue.size());
+        actions->notifyFSMs();
+        new(this) SwitchError;
         return;
     }
+
+    long long currentTimeStamp = createTimeStamp();
+    long long timeUsed = currentTimeStamp - data->queue[id].minTimeStamp;
+    bool wpTimerOk =  (timeUsed - data->stopTime) >= (data->sectionBticks - 280);
+    std::cout << "HM: timeUsed: " << timeUsed << " sectionAticks: " << data->sectionBticks - 220 << std::endl;
+
+    if(!wpTimerOk){
+        printf("SWITCH: TOO EARLY: -id:%d.\n", id);
+        actions->notifyFSMs();
+        new(this) SwitchError;
+        return;
+    }
+
+
+
+    data->queue[id].minTimeStamp = createTimeStamp();
     data->queue[id].still_on_belt = false;
-    //data->queue[id].minTimerOk = false;
     data->queue[id].deleteMaxTimer();
-    //actions->deleteFromVector(data, id);
     data->counter_switch++;
+
     switch (data->queue[id].getType()) {
         case WorkpieceType::FlatWorkpiece:
             if(data->typCounter == 2){ //richtig
@@ -73,91 +90,6 @@ void SwitchIdle::lbs_blocked() {
     }
     new(this) MetalDetected;
 }
-
-/*
-void SwitchIdle::lbs_blocked() {
-
-    if((data->queue[id].getType() == WorkpieceType::MetalWorkpiece) && (data->typCounter < 2)){
-        //WP richtig (hohes mit metall)
-
-        data->typCounter++;
-        data->counter_switch++;
-        actions->letThrough();
-        //letThrough();
-        myStartTimer(data->connectionID_FSM, PULSE_TIME_OUT_METAL_SWITCH, 0, false, timex);
-        printf("SWITCH: letThrough RICHTIG METAL id: %d, typCounter: %d\n", id, data->typCounter);
-        new(this) MetalDetected;
-    }else if((data->queue[id].getType() == WorkpieceType::FlatWorkpiece) && (data->typCounter == 2)){ // richtiger fall
-        // flat ist erwartet
-
-        actions->letThrough();
-        printf("typCounter before module: %d", data->typCounter);
-        data->typCounter%=2;
-        printf("typCounter after module: %d", data->typCounter);
-        data->counter_switch++;
-
-        myStartTimer(data->connectionID_FSM, PULSE_TIME_OUT_METAL_SWITCH, 0, false, timex);
-        printf("SWITCH: letThrough RICHTIG FLAT id: %d, typCounter: %d\n", id, data->typCounter);
-        new(this) MetalDetected;
-    } else if((data->queue[id].getType() == WorkpieceType::MetalWorkpiece) && (data->typCounter == 2) && (data->chute_full)){
-        //WP falsch (hohes mit metall but expected FlatWorkpiece)
-
-        data->counter_switch++;
-        actions->letThrough();
-        //letThrough();
-        myStartTimer(data->connectionID_FSM, PULSE_TIME_OUT_METAL_SWITCH, 0, false, timex);
-        printf("SWITCH: letThrough FALSCH MEATL id: %d, typCounter: %d\n", id, data->typCounter);
-        new(this) MetalDetected;
-
-    } else if((data->queue[id].getType() == WorkpieceType::MetalWorkpiece) && (data->typCounter == 2) && (!data->chute_full)){
-        //WP falsch (hohes mit metall but expected FlatWorkpiece)
-
-        data->counter_switch++;
-        actions->sortOut();
-        //sortOut();
-        myStartTimer(data->connectionID_FSM, PULSE_TIME_OUT_METAL_SWITCH, 0, false, timex);
-        printf("SWITCH: sortOut FALSCH METAL id: %d, typCounter: %d\n", id, data->typCounter);
-        new(this) MetalDetected;
-    }
-
-    else if((data->queue[id].getType() == WorkpieceType::FlatWorkpiece) && (data->typCounter < 2) && (!data->chute_full)){
-
-        data->counter_switch++;
-        actions->sortOut();
-        //sortOut();
-        printf("SWITCH: sortOut FALSCH FALT id: %d, typCounter: %d\n", id, data->typCounter);
-        myStartTimer(data->connectionID_FSM, PULSE_TIME_OUT_METAL_SWITCH, 0, false, timex);
-        new(this) MetalDetected;
-    }
-    else if((data->queue[id].getType()== WorkpieceType::FlatWorkpiece) && (data->typCounter < 2) && (data->chute_full)){
-
-        data->counter_switch++;
-        actions->letThrough();
-        //letThrough();
-        printf("SWITCH: letThrough FALSCH FLAT id: %d, typCounter: %d\n", id, data->typCounter);
-        new(this) MetalDetected;
-    } else if((data->queue[id].getType() != WorkpieceType::FlatWorkpiece) && (data->chute_full)){
-
-        data->counter_switch++;
-        actions->letThrough();
-        //letThrough();
-        printf("SWITCH: letThrough FALSCH FLAT id: %d, typCounter: %d\n", id, data->typCounter);
-        myStartTimer(data->connectionID_FSM, PULSE_TIME_OUT_METAL_SWITCH, 0, false, timex);
-        new(this) MetalDetected;
-    } else if((data->queue[id].getType() != WorkpieceType::FlatWorkpiece) && (!data->chute_full)){
-
-        data->counter_switch++;
-        actions->sortOut();
-        //updateAndSortOut();
-        printf("SWITCH: letThrough FALSCH FLAT id: %d, typCounter: %d\n", id, data->typCounter);
-        myStartTimer(data->connectionID_FSM, PULSE_TIME_OUT_METAL_SWITCH, 0, false, timex);
-        new(this) MetalDetected;
-    }
-    else{
-        printf("Nix LBS\n");
-    }
-}
- */
 
 void SwitchIdle::error(){
     new(this) SwitchError;

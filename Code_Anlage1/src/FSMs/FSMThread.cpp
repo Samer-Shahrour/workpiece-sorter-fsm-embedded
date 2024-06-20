@@ -32,14 +32,6 @@ void FSM_Thread(int channelID_FSM, int connectionID_FSM, int connectionID_Dispat
                 printf("Dispatcher Thread kill code received!\n");
                 receiveRunning = false;
                 break;
-            case PULSE_TIME_OUT_WP_MIN:
-            	for(int i = 0; i < data->queue.size(); i++){
-            		if(data->queue[i].getId() == msg.value.sival_int){
-            			data->queue[i].minTimerOk = true;
-            			printf("min_time_ok for vec_pos: %d \n", i);
-            		}
-            	}
-            	break;
             case PULSE_CALIBRATION_OPERATION:
                 if(msg.value.sival_int){
                     inOperation = false;

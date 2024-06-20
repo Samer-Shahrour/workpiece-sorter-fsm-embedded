@@ -1,4 +1,5 @@
 #include <iostream>
+#include <time.h>
 #include "../../../header/FSMs/hightMeasurmentFSM/WaitForEncoder.h"
 #include "../../../header/FSMs/hightMeasurmentFSM/ErrorHM.h"
 #include "../../../header/FSMs/hightMeasurmentFSM/UnderHS.h"
@@ -6,31 +7,46 @@
 #include "../../../header/myTimer.h"
 
 void WaitforEncoder::hight_changed(int _) {
+
     int id = data->counter_HM;
-    bool wsTimerOk = data->queue[id].minTimerOk;
     bool validId = id < data->queue.size();
 
-    if(validId && wsTimerOk){
-        //data->queue[id].minTimerOk = false; // thread setzt die variable auf true wenn der time event da ist
-        actions->motor_fast(false);
-        actions->getRemainingTime(data, id);
-        actions->deleteAllTimer(data);
-        actions->restartMaxTimer(data, id);
-        actions->incrementSwitchTime();
-        //actions->startTimer(data, id); //for next section (B)
-        new(this) UnderHS;
-    } else {
-        if(!validId){
-            printf("id falsch: %d --- queueSize: %d\n", id, data->queue.size());
-        }
-        else if(!wsTimerOk){
-            printf("minTimerOk false: id:%d ", id);
-            std::cout << "remaining Time: " << getRemainingTimeInMS(data->queue[id].min_time) << std::endl;
-        }
+    if(data->stopTime == 0){
+        printf("HM: BELT IS STOPPED!!!!!!!!!!");
         actions->notifyFSMs();
-        //keine timer delete, error fsm macht das
         new(this) ErrorHM;
     }
+
+    if(!validId){
+        printf("HM: OUT OF BOUNDS -id: %d, -queueSize: %d.\n", id, data->queue.size());
+        actions->notifyFSMs();
+        new(this) ErrorHM;
+        return;
+    }
+
+    long long currentTimeStamp = createTimeStamp();
+    uint64_t timeUsed = currentTimeStamp - data->queue[id].minTimeStamp;
+
+    bool wpTimerOk =  (timeUsed - data->stopTime) >= (data->sectionAticks - 530);
+    std::cout << "HM: timeUsed: " << timeUsed << " sectionAticks: " << data->sectionAticks - 350 << std::endl;
+
+    if(!wpTimerOk){
+        printf("HM: TOO EARLY: -id:%d.\n", id);
+        actions->notifyFSMs();
+        new(this) ErrorHM;
+        return;
+    }
+
+    actions->motor_fast(false);
+    actions->getRemainingTime(data, id);
+    actions->deleteAllTimer(data);
+    actions->restartMaxTimer(data, id);
+    actions->incrementSwitchTime();
+    //start Timer for Section B
+    data->queue[id].minTimeStamp = createTimeStamp();
+    data->queue[id].startMaxTimer(data->sectionBticks+500);
+    new(this) UnderHS;
+
 }
 
 void WaitforEncoder::m2_estop_pressed() {

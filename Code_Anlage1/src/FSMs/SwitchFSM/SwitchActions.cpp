@@ -8,7 +8,7 @@
 void SwitchActions::sendMsg(int msg){
     MsgSendPulse(connectionID_Dispatcher, -1, PULSE_FROM_FSM_TO_HAL, msg);
 }
-void SwitchActions::notifyFSms(void){
+void SwitchActions::notifyFSMs(void){
     MsgSendPulse(connectionID_FSM, -1, PULSE_ERROR, 0);
 }
 

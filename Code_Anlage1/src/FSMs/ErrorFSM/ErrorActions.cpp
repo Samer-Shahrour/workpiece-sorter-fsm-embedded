@@ -35,7 +35,6 @@ void ErrorActions::turnAllOff() {
 
 void ErrorActions::deleteAllTimer(ContextData *data){
 	for (int i = 0; i < data->queue.size(); i++){
-		data->queue[i].deleteMinTimer();
 		data->queue[i].deleteMaxTimer();
 	}
 }

@@ -9,7 +9,6 @@ Workpiece::Workpiece(int connectionID_FSMs) {
     type = WorkpieceType::DefectiveWorkpiece;
     wp_id = generateId();
     connectionID_FSM = connectionID_FSMs;
-    minTimerOk = true;
     still_on_belt = true;
 }
 
@@ -36,32 +35,15 @@ void Workpiece::setType(WorkpieceType newType) {
     type = newType;
 }
 
-void Workpiece::deleteMinTimer() {
-    printf("Min Timer deleted for WP-ID: %d\n", wp_id);
-    myDeleteTimer(min_time);
-}
-
 void Workpiece::deleteMaxTimer() {
     printf("Max Timer deleted for WP-ID: %d\n", wp_id);
     myDeleteTimer(max_time);
-}
-
-void Workpiece::getRemainingMinTime() {
-    remainig_min_time = getRemainingTimeInMS(min_time);
 }
 
 void Workpiece::getRemainingMaxTime() {
     remainig_max_time = getRemainingTimeInMS(max_time);
 }
 
-
-void Workpiece::restartMinTimer(uint64_t extraTimeInMS){
-    if(remainig_min_time){
-        myStartTimer(&min_time, connectionID_FSM, PULSE_TIME_OUT_WP_MIN, wp_id, false, (remainig_min_time+extraTimeInMS));
-        std::cout << "Min-Timer REstarted RemainingTime = " << getRemainingTimeInMS(min_time) << " mit ID: " << wp_id << std::endl;
-        remainig_min_time = 0;
-    }
-}
 
 void Workpiece::restartMaxTimer(uint64_t extraTimeInMS){
     if(remainig_max_time){
@@ -71,24 +53,11 @@ void Workpiece::restartMaxTimer(uint64_t extraTimeInMS){
     }
 }
 
-void Workpiece::startMinTimer(int time){
-    //myStartTimer(&min_time, connectionID_FSM, PULSE_TIME_OUT_WP_MIN, wp_id, false, time);
-    //std::cout << "Min-Timer started RemainingTime = " << getRemainingTimeInMS(min_time) << " mit ID: " << wp_id << std::endl;
-}
-
 void Workpiece::startMaxTimer(int time){
     myStartTimer(&max_time, connectionID_FSM, PULSE_TIME_OUT_WP_MAX, wp_id, false, time);
     std::cout << "Max-Timer started RemainingTime = " << getRemainingTimeInMS(max_time) << " mit ID: " << wp_id << std::endl;
 }
 
-void Workpiece::deleteAndRestartMinTime(uint64_t extraTimeInMS){
-	/*
-    uint64_t rem_time = getRemainingTimeInMS(min_time);
-    myDeleteTimer(min_time);
-    uint64_t new_time = rem_time + extraTimeInMS;
-    min_time = myStartTimer(connectionID_FSM, PULSE_TIME_OUT_WP_MIN, wp_id, false, new_time);
-    */
-}
 
 void Workpiece::deleteAndRestartMaxTime(uint64_t extraTimeInMS){
 	/*

@@ -4,7 +4,10 @@
 #include "../../../header/PulseCodes.h"
 #include <stdio.h>
 #include <iostream>
+#include <chrono>
 #include "../../../header/myTimer.h"
+
+using namespace std;
 
 void BeginActions::sendMsg(int msg) {
     MsgSendPulse(connectionID_Dispatcher, -1, PULSE_FROM_FSM_TO_HAL, msg);
@@ -28,11 +31,13 @@ void BeginActions::notifyFSMs() {
 
 
 void BeginActions::pushObject(ContextData* data) {
-	Workpiece wp(connectionID_FSMs); //TODO zeiten ändern
-	wp.startMinTimer(data->sectionAticks-500);
+	Workpiece wp(connectionID_FSMs);
+
+    wp.minTimeStamp = createTimeStamp();
+
 	wp.startMaxTimer(data->sectionAticks+500);
 	data->queue.push_back(wp);
-	for (unsigned i=0; i<	data->queue.size(); i++){
+	for (unsigned i=0; i < data->queue.size(); i++){
 		printf("Workpiece[connectionID: %d,] \n", data->queue[i].getId());
 	}
 }

@@ -2,11 +2,14 @@
 #include "../../../header/FSMs/StopFSM/Stop.h"
 #include "../../../header/FSMs/StopFSM/EstopStop.h"
 #include "../../../header/FSMs/StopFSM/StopError.h"
+#include "../../../header/myTimer.h"
 
 void IdleStop::stop_pressed() {
     actions->motorBlock();
     actions->getRemainingTime(data);
     actions->deleteAllTimer(data);
+    data->stopTimeBegin = createTimeStamp();
+    data->stopTime = 0;
     new(this) Stop;
 }
 
