@@ -13,15 +13,10 @@
 #include "../../header/hal/Sensors.h"
 #include "../../header/PulseCodes.h"
 #include "../../header/ChannelUtils.h"
-#include "../../header/Logik/Context.h"
 #include "../../header/FSMs/E_STOP/ContextEStop.h"
 #include <sys/dispatch.h>
 
-
-
-unsigned int previousDatainReg = 0;
-
-void dispatcherThread(int channelID_Dispatcher, int connectionID_FSM_ESTOP, int connectionID_FSM_HM, int connectionID_HAL_ACTUATORS){
+void dispatcherThread(int channelID_Dispatcher, int connectionID_FSM_ESTOP, int connectionID_FSM, int connectionID_HAL_ACTUATORS, int connectionID_Encoder, int connectionID_Logger){
 	ThreadCtl(_NTO_TCTL_IO, 0);
 	_pulse msg;
 	bool receiveRunning = true;
@@ -36,36 +31,47 @@ void dispatcherThread(int channelID_Dispatcher, int connectionID_FSM_ESTOP, int 
                 receiveRunning = false;
                 break;
 
-            case PULSE_LOW_HIGH_MACHINE2:
-            case PULSE_HIGH_LOW_MACHINE2:
-                cout << "anlage1: sending m2-msg to fsm" <<"\n";
-                MsgSendPulse(connectionID_FSM_ESTOP, -1, msg.code, msg.value.sival_int);
+            case PULSE_HIGHT:
+                MsgSendPulse(connectionID_FSM, -1, msg.code, msg.value.sival_int);
                 break;
 
+            case PULSE_LOW_HIGH_MACHINE2:
+            case PULSE_HIGH_LOW_MACHINE2:
+                MsgSendPulse(connectionID_FSM, -1, msg.code, msg.value.sival_int);
+                break;
+
+            case PULSE_ESTOP_OK:
+                MsgSendPulse(connectionID_FSM, -1, msg.code, msg.value.sival_int);
+                break;
 
             case PULSE_LOW_HIGH_MACHINE1:
             case PULSE_HIGH_LOW_MACHINE1:
-                MsgSendPulse(connectionID_FSM_ESTOP, -1, msg.code, msg.value.sival_int);
                 if(msg.value.sival_int == E_STOP || msg.value.sival_int == BUTTON_RESET){ //send to A2
-                   client(msg);
+                    client(msg);
                 }
+                MsgSendPulse(connectionID_FSM, -1, msg.code, msg.value.sival_int);
                 break;
-
-            case PULSE_HIGHT:
-                MsgSendPulse(connectionID_FSM_HM, -1, msg.code, msg.value.sival_int);
-            	break;
 
             case PULSE_FROM_FSM_TO_HAL:
-                MsgSendPulse(connectionID_HAL_ACTUATORS, -1, msg.code, msg.value.sival_int);
-                break;
-
             case PULSE_FLASH_ON:
             case PULSE_FLASH_OFF:
                 MsgSendPulse(connectionID_HAL_ACTUATORS, -1, msg.code, msg.value.sival_int);
                 break;
 
+            case PULSE_CALIBRATION_OPERATION:
+                MsgSendPulse(connectionID_Encoder, -1, msg.code, msg.value.sival_int);
+                MsgSendPulse(connectionID_FSM, -1, msg.code, msg.value.sival_int);
+                break;
 
+            case PULSE_TIME_OUT_BEGIN:
+            	 MsgSendPulse(connectionID_FSM, -1, msg.code, msg.value.sival_int);
+            	 break;
+
+            default:
+				   printf("kompiler DISPATCHER sagt NEIN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+				   break;
         }
+        MsgSendPulse(connectionID_Logger, -1, msg.code, msg.value.sival_int);
 	}
 	printf("Dispatcher Thread Done!\n");
 }

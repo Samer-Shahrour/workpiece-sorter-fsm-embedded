@@ -21,5 +21,5 @@ enum class Event {
     leftHightmeasurement = 17,
     MetalDetected = 18
 };
-void dispatcherThread(int dispatcher, int EStop, int HM, int act);
+void dispatcherThread(int dispatcher, int EStop, int HM, int act, int encoder, int logger);
 void decodeMsg(_pulse msg);

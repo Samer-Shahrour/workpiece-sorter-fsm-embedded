@@ -8,6 +8,7 @@
 #include "../../header/PulseCodes.h"
 #include "../../header/ChannelUtils.h"
 #include "../../header/Hal/Actuators.h"
+#include "../../header/Hal/Sensors.h"
 #include "../../header/myTimer.h"
 
 void handleFSMRequest(Actuators*, int);
@@ -17,7 +18,21 @@ Actuators::Actuators(){
     gpio_bank_1 = mmap_device_io(GPIO_LENGTH, (uint64_t) GPIO_BANK_1);
     gpio_bank_2 = mmap_device_io(GPIO_LENGTH, (uint64_t) GPIO_BANK_2);
     isSwitch = checkSwitch();
+    if(!isSwitch){
+        printf("HAL: Auswerfer\n");
+    } else{
+        printf("HAL: Weiche\n");
+    }
     out32((uintptr_t)(gpio_bank_2 + GPIO_OE), LED_SWITCH_ALL_OFF);
+    this->resumeConveyorBelt();
+    this->lampSwitchOff(RED);
+    this->lampSwitchOff(YELLOW);
+    this->lampSwitchOff(GREEN);
+    this->stopConveyorBelt();
+    this->ledSwitchOff(LED_Q1);
+    this->ledSwitchOff(LED_Q2);
+    this->ledSwitchOff(LED_START);
+    this->ledSwitchOff(LED_RESET);
 }
 
 Actuators::~Actuators(){
@@ -68,58 +83,33 @@ void Actuators::lampSwitchOff(int lamp_id){
     out32((uintptr_t)(gpio_bank_1 + CLEAR), lamp_id);
 }
 
-bool Actuators::checkLampOn(int lamp_id){
-	//TODO: check if true result
-	uint32_t data = in32((uintptr_t) gpio_bank_1 + GPIO_DATA_OUT);
-	return ((data & lamp_id) == lamp_id);
-}
-
-// kann wahrscheinlich weg
 void Actuators::letThrough(void){
     if(isSwitch){
-        out32((uintptr_t)(gpio_bank_1 + SET), SWITCH);
-        usleep(1000*500); // TODO: interrupt => while LSW unterbrochen ist
-        out32((uintptr_t) (gpio_bank_1 + CLEAR), SWITCH);
+        out32((uintptr_t)(gpio_bank_1 + SET), SWITCH); // Weiche oeffnen
+    } else {
+        out32((uintptr_t) (gpio_bank_1 + CLEAR), SWITCH); // Auswerfer schliessen
     }
 }
 
-// kann wahrscheinlich weg
 void Actuators::sortOut(void){
-    if(!isSwitch){
-        out32((uintptr_t)(gpio_bank_1 + SET), SWITCH);
-        usleep(100*500);
-        out32((uintptr_t) (gpio_bank_1 + CLEAR), SWITCH);
-    }
-}
-
-void Actuators::openSwitch(void){
     if(isSwitch){
-        out32((uintptr_t)(gpio_bank_1 + SET), SWITCH); // Weiche Ã¶ffnen
+        out32((uintptr_t)(gpio_bank_1 + CLEAR), SWITCH); // Weiche schliessen
     } else {
-        out32((uintptr_t) (gpio_bank_1 + CLEAR), SWITCH); // Auswerfer schlieÃŸen
+        out32((uintptr_t) (gpio_bank_1 + SET), SWITCH); // Auswerfer oeffnen
     }
 }
-
-void Actuators::closeSwitch(void){
-    if(isSwitch){
-        out32((uintptr_t)(gpio_bank_1 + CLEAR), SWITCH); // Weiche schlieÃŸen
-    } else {
-        out32((uintptr_t) (gpio_bank_1 + SET), SWITCH); // Auswerfer Ã¶ffnen
-    }
-}
-
 
 bool Actuators::checkSwitch(void){
-    uint32_t data = in32((uintptr_t) gpio_bank_1 + GPIO_DATA_OUT);
-    //std::cout << ((data & SWITCH) != SWITCH) << std::endl;
-    return ((data & SWITCH) != SWITCH);
+	uintptr_t gpio_bank_0 = mmap_device_io(GPIO_LENGTH, (uint64_t) GPIO_BANK_0);
+	uint32_t data = in32((uintptr_t) gpio_bank_0 + GPIO_DATA_IN);
+	return ((data & SWITCH_CHECK) != SWITCH_CHECK);
 }
-
 
 void actuatorsThread(int connectionID_HalActuators,int channelID_HalActuators) {
     ThreadCtl(_NTO_TCTL_IO, 0);
     timer_t time;
     Actuators a;
+    a.connectionID_HalActuators = connectionID_HalActuators;
     bool an = false;
     _pulse msg;
     bool receivingRunning = true;
@@ -141,7 +131,7 @@ void actuatorsThread(int connectionID_HalActuators,int channelID_HalActuators) {
                 break;
 
             case PULSE_FLASH_ON:
-               a.lampSwitchOn(msg.value.sival_int);
+                a.lampSwitchOn(msg.value.sival_int);
                 handleFlash(msg.value.sival_int, &time, connectionID_HalActuators);
                 break;
 
@@ -153,10 +143,17 @@ void actuatorsThread(int connectionID_HalActuators,int channelID_HalActuators) {
             case PULSE_TIME_OUT_FLASH:
                 an = turnLamp(&a, msg.value.sival_int, an);
                 break;
+
+            case PULSE_TIME_SWITCH_OUT:
+            	printf("pulse_time_out_switch \n");
+                if(a.isSwitch){
+                    a.sortOut();
+                } else {
+                    a.letThrough();
+                }
+                break;
         }
     }
-
-    printf("Actuators thread Done!\n");
 }
 
 bool turnLamp(Actuators *a, int lampID, bool on){
@@ -174,21 +171,40 @@ void handleFlash(int msgValue, timer_t* time, int connectionID_HalActuators){
     myDeleteTimer(*time);
     switch(msgValue){
     case RED:
-        *time = myStartTimer(connectionID_HalActuators, PULSE_TIME_OUT_FLASH, msgValue, true, ONE_HZ);
+        myStartTimer(time, connectionID_HalActuators, PULSE_TIME_OUT_FLASH, msgValue, true, ONE_HZ);
         break;
 
     case GREEN:
-        *time = myStartTimer(connectionID_HalActuators, PULSE_TIME_OUT_FLASH,msgValue, true, HALF_HZ);
+        myStartTimer(time, connectionID_HalActuators, PULSE_TIME_OUT_FLASH,msgValue, true, HALF_HZ);
         break;
-
     }
 
+}
+
+void Actuators::startSwitchTimer(){
+    myStartTimer(&this->halTimer, connectionID_HalActuators, PULSE_TIME_SWITCH_OUT, SWITCH_SENSOR, false, 650);
+}
+void Actuators::restartSwitchTimer(){
+    int remaining = getRemainingTimeInMS(halTimer);
+    if(remaining == 0){
+        printf("remaininig Time for switch was 0, so no timer restarted\n");
+        return;
+    }
+
+    myStartTimer(&this->halTimer, connectionID_HalActuators, PULSE_TIME_SWITCH_OUT, SWITCH_SENSOR, false,
+                                  remaining+550);
+
+    std::cout << "restarted timer for switch: NEW remaining time: " << getRemainingTimeInMS(this->halTimer) << std::endl;
+}
+
+void Actuators::startEjectorTimer(){
+	timer_t id;
+    myStartTimer(&id,connectionID_HalActuators, PULSE_TIME_SWITCH_OUT, EJECTOR, false, 50);
 }
 
 
 void handleFSMRequest(Actuators *a, int msgValue){
 	switch(msgValue){
-
 	    //FB
 		case MOVE_RIGHT:
 		case MOVE_LEFT:
@@ -231,15 +247,12 @@ void handleFSMRequest(Actuators *a, int msgValue){
             a->ledSwitchOff(msgValue);
 	        break;
 
-
 	    //LAMPEN
 	    case RED + LIGHT_ON:
         case YELLOW + LIGHT_ON:
         case GREEN + LIGHT_ON:
             a->lampSwitchOn(msgValue - LIGHT_ON);
 	        break;
-
-
 	    case RED + LIGHT_OFF:
         case YELLOW + LIGHT_OFF:
         case GREEN + LIGHT_OFF:
@@ -247,10 +260,23 @@ void handleFSMRequest(Actuators *a, int msgValue){
 	        break;
 
         case SORT_OUT:
-			a->sortOut();
+            a->sortOut();
+            if(!a->isSwitch){
+                a->startEjectorTimer();
+            }
 			break;
+
         case LET_THROUGH:
-        	a->letThrough();
+            a->letThrough();
+            if(a->isSwitch){
+                a->startSwitchTimer();
+            }
         	break;
+
+        case HM_SLOW:
+            if(a->isSwitch){
+                a->restartSwitchTimer();
+            }
+            break;
 	}
 }

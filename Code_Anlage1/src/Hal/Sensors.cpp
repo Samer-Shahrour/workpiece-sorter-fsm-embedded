@@ -31,13 +31,9 @@ int Sensors::buttonIsPressed(uint32_t button){
 	}
 }
 
-bool Sensors::isUnderHS(void){
-    return false; //TODO
-}
-
 int Sensors::isMetal(void){
 	uint32_t data = in32((uintptr_t) gpio_bank_0 + GPIO_DATA_IN);
-	return ((data & SENSOR_METAL) == SENSOR_METAL);
+	return ((data & IS_METAL) == IS_METAL);
 }
 
 

@@ -51,16 +51,12 @@ static void handle_pulse(_pulse pulse, int rcvid, int connectionID_Dispatcher){
 			break;
         case PULSE_HIGH_LOW_MACHINE2:
         case PULSE_LOW_HIGH_MACHINE2:
-
-            printf("msg von machine2 received\n");
             MsgSendPulse(connectionID_Dispatcher, -1, pulse.code, pulse.value.sival_int);
             break;
 		default:
 			/* A pulse sent by one of your processes or a
 			* _PULSE_CODE_COIDDEATH or _PULSE_CODE_THREADDEATH
 			* from the kernel? */
-			printf("Server received some pulse msg.\n");
-			std::cout << "pulse code: " << pulse.code << "\n";
 			break;
 	}
 }
@@ -79,13 +75,12 @@ void server(int connectionID_Disptacher){
 	while(true){
 		_pulse pulse;
 		int rcvid = MsgReceive(attach->chid, &pulse, sizeof(_pulse), NULL);
-		cout << "anlage1: something received from machine 2" <<"\n";
+
 		if (rcvid == -1) { // Error occurred
 			perror("Server: MsgReceived failed");
 			break;
 		}
 		if (rcvid == 0) {// Pulse was received
-			cout << "anlage1: pulse received from machine 2" <<"\n";
 			handle_pulse(pulse, rcvid, connectionID_Disptacher);
 			continue;
 		}

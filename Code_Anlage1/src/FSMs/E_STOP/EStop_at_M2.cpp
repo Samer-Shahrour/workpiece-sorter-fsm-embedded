@@ -4,14 +4,12 @@
 #include "../../../header/FSMs/E_Stop/Wait_for_Reset_1_2.h"
 
 void EStop_at_M2::m2_estop_released(){
-	//Done
     actions->stopRedFLASH();
     actions->turnRed(true);
     new(this) Wait_for_Reset_1_2;
 }
 
 void EStop_at_M2::m1_estop_pressed(){
-    //Done
-    actions->turnYellow(true);
+    actions->turnLEDQ2(true);
 	new(this) EStop_at_M1_and_M2;
 }

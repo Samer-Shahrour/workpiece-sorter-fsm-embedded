@@ -42,6 +42,10 @@
 #define MOTOR_SLOW 0x12
 #define SORT_OUT 0x16
 #define LET_THROUGH 0x17
+#define HM_SLOW 0x18
+
+#define SWITCH_SENSOR 0
+#define EJECTOR 1
 
 void handleFlash(int msgValue, timer_t* time,int connectionID_HalActuators);
 void actuatorsThread(int connectionID_HalActuators,int channelID_HalActuators);
@@ -49,13 +53,20 @@ class Actuators {
 private:
     uintptr_t gpio_bank_1;
     uintptr_t gpio_bank_2;
-    bool isSwitch;
+
     const int SET = 0x194;
     const int CLEAR = 0x190;
+    timer_t halTimer;
+    uint64_t remainingTime = 0;
     bool checkSwitch(void);
 public:
     Actuators(void);
     ~Actuators(void);
+    bool isSwitch;
+    int connectionID_HalActuators;
+    void startSwitchTimer();
+    void restartSwitchTimer();
+    void startEjectorTimer();
     void moveConveyorBelt(int direction);
     void moveConveyorBeltSlow(bool slow);
     void stopConveyorBelt(void);
@@ -66,10 +77,6 @@ public:
     void lampSwitchOn(int lamp_id);
     void lampSwitchOff(int lamp_id);
 
-    bool checkLampOn(int lamp_id);
-    void closeSwitch(void);
-    void openSwitch(void);
-
-    void letThrough(void); 	// -> kann wahrscheinlich weg
-    void sortOut(void);		// -> kann wahrscheinlich weg
+    void letThrough(void);
+    void sortOut(void);
 };

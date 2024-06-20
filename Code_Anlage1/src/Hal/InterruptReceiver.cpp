@@ -49,14 +49,14 @@ void configureIRQStatus(uintptr_t gpio_bank_0){
 
 void enableRisingEdgeDetect(uintptr_t gpio_bank_0){
     unsigned int temp = in32((uintptr_t) (gpio_bank_0 + GPIO_RISINGDETECT));
-    temp |= (E_STOP | BUTTON_START | BUTTON_RESET | BUTTON_STOP | SENSOR_METAL | IN_HIGHT_MEASUREMENT | LBB | LBS | LBC | LBE);//Add desired pins.
+    temp |= (E_STOP | BUTTON_START | BUTTON_RESET | BUTTON_STOP | IS_METAL | IN_HIGHT_MEASUREMENT | LBB | LBS | LBC | LBE);//Add desired pins.
     out32((uintptr_t) (gpio_bank_0 + GPIO_RISINGDETECT), temp);			//Write new config back.
 }
 
 
 void enableFallingEdgeDetect(uintptr_t gpio_bank_0){
     unsigned int temp = in32((uintptr_t) (gpio_bank_0 + GPIO_FALLINGDETECT));			//Read current config.
-    temp |= (E_STOP | BUTTON_START | BUTTON_RESET | BUTTON_STOP | SENSOR_METAL | IN_HIGHT_MEASUREMENT | LBB | LBS | LBC | LBE);//Add desired pins.
+    temp |= (E_STOP | BUTTON_START | BUTTON_RESET | BUTTON_STOP | IS_METAL | IN_HIGHT_MEASUREMENT | LBB | LBS | LBC | LBE);//Add desired pins.
     out32((uintptr_t) (gpio_bank_0 + GPIO_FALLINGDETECT), temp);			//Write new config back.
 }
 

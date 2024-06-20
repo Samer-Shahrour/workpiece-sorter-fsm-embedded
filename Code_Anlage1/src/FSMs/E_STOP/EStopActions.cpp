@@ -8,47 +8,58 @@ void EStopActions::sendMsg(int msg){
     MsgSendPulse(connectionID_Dispatcher, -1, PULSE_FROM_FSM_TO_HAL, msg);
 }
 
+void EStopActions::sendEstopOK(){
+    MsgSendPulse(connectionID_Dispatcher, -1, PULSE_ESTOP_OK, 0);
+}
+
 void EStopActions::turnRed(bool on){
     if(on){
         sendMsg(RED + LIGHT_ON);
     } else {
         sendMsg(RED + LIGHT_OFF);
     }
-
 }
-void EStopActions::turnYellow(bool on){
+
+void EStopActions::turnLEDQ2(bool on){
     if(on){
-        sendMsg(YELLOW + LIGHT_ON);
+        sendMsg(LED_Q2 + LIGHT_ON);
     } else {
-        sendMsg(YELLOW + LIGHT_OFF);
+        sendMsg(LED_Q2 + LIGHT_OFF);
     }
-
 }
+
 void EStopActions::startRedFLASH(){
     MsgSendPulse(connectionID_Dispatcher, -1, PULSE_FLASH_ON, RED);
 }
+
 void EStopActions::stopRedFLASH(){
     MsgSendPulse(connectionID_Dispatcher, -1, PULSE_FLASH_OFF, RED);
 }
-void EStopActions::motorBlock(void){
-    sendMsg(BLOCK);
-}
+
 void EStopActions::motorUnblock(void){
     sendMsg(UNBLOCK);
 }
 
-void EStopActions::sortOut(void){
-    sendMsg(SORT_OUT);
+void EStopActions::deleteAllTimer(ContextData *data){
+	for (int i = 0; i < data->queue.size(); i++){
+		data->queue[i].deleteMinTimer();
+		data->queue[i].deleteMaxTimer();
+	}
 }
 
-void EStopActions::letThrough(void){
-    sendMsg(LET_THROUGH);
+void EStopActions::resetAllData(ContextData *data){
+    data->typCounter = 0;
+    data->counter_switch = 0;
+    data->counter_HM = 0;
+    data->queue.clear();
+    data->timerStart_reminingTime = 0;
 }
 
-void EStopActions::motorStart(void){
-    sendMsg(MOVE_RIGHT);
-}
-
-void EStopActions::motorStop(void){
+void EStopActions::resetMachineActions(void){
+    sendMsg(GREEN + LIGHT_OFF);
+    sendMsg(YELLOW + LIGHT_OFF);
+    sendMsg(LED_Q1 + LIGHT_OFF);
+    sendMsg(BLOCK);
     sendMsg(STOP);
+    sendMsg(MOTOR_FAST);
 }

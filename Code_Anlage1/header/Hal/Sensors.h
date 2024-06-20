@@ -18,11 +18,13 @@
 #define BUTTON_RESET 0x4000000
 #define E_STOP 0x8000000
 
+#define SWITCH_CHECK 0x4000
+
 #define IN_HIGHT_MEASUREMENT 0x10
-#define SENSOR_METAL 0x80
+#define IS_METAL 0x80
 
 #define NUMER_RELEVANT_PINS 10
-static int pinsOfInterest[10] = {E_STOP, BUTTON_START, BUTTON_RESET, BUTTON_STOP, SENSOR_METAL, IN_HIGHT_MEASUREMENT, LBB, LBS, LBC, LBE};
+static int pinsOfInterest[10] = {E_STOP, BUTTON_START, BUTTON_RESET, BUTTON_STOP, IS_METAL, IN_HIGHT_MEASUREMENT, LBB, LBS, LBC, LBE};
 
 class Sensors {
     private:
@@ -33,7 +35,6 @@ class Sensors {
         ~Sensors();
         bool lightBarrierInterrupted(uint32_t lightbarrier);
         int buttonIsPressed(uint32_t button);
-        bool isUnderHS(void);
         int isMetal(void);
 };
 

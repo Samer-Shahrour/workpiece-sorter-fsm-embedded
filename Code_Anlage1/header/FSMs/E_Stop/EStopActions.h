@@ -1,5 +1,5 @@
 #pragma once
-
+#include "../ContextData.h"
 class EStopActions{
 
 private:
@@ -7,13 +7,12 @@ private:
 public:
     int connectionID_Dispatcher;
     void turnRed(bool);
-    void turnYellow(bool);
+    void sendEstopOK(void);
+    void turnLEDQ2(bool);
     void startRedFLASH(void);
     void stopRedFLASH(void);
-    void motorBlock(void);
     void motorUnblock(void);
-    void sortOut(void);
-    void letThrough(void);
-    void motorStart(void);
-    void motorStop(void);
+    void deleteAllTimer(ContextData *data);
+    void resetAllData(ContextData *data);
+    void resetMachineActions(void);
 };

@@ -1,4 +1,3 @@
-#include "../../../header/FSMs/E_Stop/ContextDataEstop.h"
 #include "../../../header/FSMs/E_Stop/BaseStateEstop.h"
 #include "../../../header/FSMs/E_Stop/EStopActions.h"
 
@@ -8,8 +7,9 @@ class ContextEstop {
 private:
     BaseStateEstop *state;  // current state of state machine
     EStopActions a;
+    ContextData *data;
 public:
-    ContextEstop(int connectionID_Dispatcher);
+    ContextEstop(int connectionID_Dispatcher, ContextData *d);
     virtual ~ContextEstop();
     void m1_reset_pressed();
 	void m1_estop_pressed();
@@ -17,20 +17,4 @@ public:
 	void m2_reset_pressed();
 	void m2_estop_pressed();
 	void m2_estop_released();
-
-	void m1_lbb_blocked();
-	void m1_lbb_free();
-
-	void m1_lbs_blocked();
-	void m1_lbs_free();
-
-	void m1_lbc_blocked();
-
-	void m1_lbe_blocked();
-	void m1_lbe_free();
-
-	void m1_start_pressed();
-	void m1_stop_pressed();
-
-	void m1_metal_detected();
 };
