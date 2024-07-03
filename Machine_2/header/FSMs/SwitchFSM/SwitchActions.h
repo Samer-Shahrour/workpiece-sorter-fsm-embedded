@@ -1,0 +1,19 @@
+#pragma once
+#include "../ContextData.h"
+
+class SwitchActions{
+
+private:
+    void sendMsg(int);
+public:
+    int connectionID_Dispatcher;
+    int connectionID_FSM;
+    void notifyFSMs(void);
+
+    void letThrough(void);
+    void sortOut(void);
+    void turnYellow(bool);
+    void deleteMaxTimer(ContextData* data, int id);
+    void sendM2_OK();
+    void motorStop();
+};
