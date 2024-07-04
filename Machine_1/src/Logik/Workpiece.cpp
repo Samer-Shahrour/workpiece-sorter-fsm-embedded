@@ -1,0 +1,69 @@
+#include "../../header/logik/Workpiece.h"
+#include "../../header/myTimer.h"
+#include "../../header/PulseCodes.h"
+#include <iostream>
+
+int static idGenerator = 0;
+
+Workpiece::Workpiece(int connectionID_FSMs) {
+    type = WorkpieceType::Default;
+    wp_id = generateId();
+    connectionID_FSM = connectionID_FSMs;
+    still_on_belt = true;
+    switchStamp = false;
+    stopTime = 0;
+    tempStamp = 0;
+}
+
+Workpiece::~Workpiece() {
+}
+
+int Workpiece::generateId(void){
+	return idGenerator++;
+}
+
+void resetGenerater(void){
+    idGenerator = 0;
+}
+
+int Workpiece::getId(){
+    return wp_id;
+}
+
+WorkpieceType Workpiece::getType(){
+    return type;
+}
+
+void Workpiece::setType(WorkpieceType newType) {
+    type = newType;
+}
+
+void Workpiece::deleteMaxTimer() {
+    myDeleteTimer(max_time);
+}
+
+void Workpiece::getRemainingMaxTime() {
+    remainig_max_time = getRemainingTimeInMS(max_time);
+}
+
+
+void Workpiece::restartMaxTimer(uint64_t extraTimeInMS){
+    if(remainig_max_time){
+        myStartTimer(&max_time, connectionID_FSM, PULSE_TIME_OUT_WP_MAX, wp_id, false, (remainig_max_time+extraTimeInMS));
+        remainig_max_time = 0;
+    }
+}
+
+void Workpiece::startMaxTimer(int time){
+    myStartTimer(&max_time, connectionID_FSM, PULSE_TIME_OUT_WP_MAX, wp_id, false, time);
+}
+
+
+void Workpiece::deleteAndRestartMaxTime(uint64_t extraTimeInMS){
+	/*
+    uint64_t rem_time = getRemainingTimeInMS(max_time);
+    myDeleteTimer(max_time);
+    uint64_t new_time = rem_time + extraTimeInMS;
+    max_time = myStartTimer(connectionID_FSM, PULSE_TIME_OUT_WP_MAX, wp_id, false, new_time);
+    */
+}
